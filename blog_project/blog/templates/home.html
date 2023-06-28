@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Blog</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <nav class="navbar">
+    <ul>
+      <li><a href="{% url 'home' %}">Home</a></li>
+    </ul>
+    <ul>
+      {% if user.is_authenticated %}
+        <li><span class="hello-username">Hello, {{ user.username }}</span></li>
+        <li><span class="hello-username"> </span></li>
+        <li><a href="{% url 'logout' %}?next={% url 'home' %}" class="btn btn-primary">Logout</a></li>
+      {% else %}
+        <li><a href="{% url 'login' %}" class="btn btn-primary">Login</a></li>
+        <li><a href="{% url 'register' %}" class="btn btn-secondary">Register</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  <div class="container">
+    <h1>Hello World</h1>
+    {% if user.is_authenticated %}
+    <h2>Create a New Blog Post</h2>
+    <form method="POST" action="{% url 'add_post' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <input type="text" name="title" placeholder="Title">
+      </div>
+      <div class="form-group">
+        <textarea name="content" placeholder="Content"></textarea>
+      </div>
+      <button type="submit">Add Post</button>
+    </form>    
+    {% endif %}
+    <hr>
+    <div class="posts">
+        {% for post in posts %}
+          <div class="post">
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.content }}</p>
+            <p class="post-author">Posted on: {{ post.date_posted }} by: {{ post.author }}</p>
+            <div class="post-actions">
+              {% if user.is_authenticated and user == post.author %}
+                <form method="POST" action="{% url 'delete_post' post.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="delete-button">Delete Post</button>
+                </form>
+              {% endif %}
+            </div>
+            <div class="comment-section">
+              <h3>Comments</h3>
+              {% for comment in post.comments.all %}
+                <div class="comment">
+                  <p class="comment-author">Posted on: {{ comment.date_posted }} by: {{ comment.author }}</p>
+                  <p class="comment-text">{{ comment.content }}</p>
+                  <br>
+                  {% if user.is_authenticated and user == comment.author %}
+                    <form method="POST" action="{% url 'delete_comment' comment.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="delete-comment-button">Delete Comment</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% empty %}
+                <p>No comments available.</p>
+              {% endfor %}
+              {% if user.is_authenticated %}
+              <div class="comment-form">
+                <form method="POST" action="{% url 'add_comment' post.id %}">
+                  {% csrf_token %}
+                  <div class="form-group">
+                    <textarea name="content" placeholder="Add a comment"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <p>No posts available.</p>
+        {% endfor %}
+      </div>
+  </div>
+</body>
+</html>
